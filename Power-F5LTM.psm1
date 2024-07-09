@@ -304,6 +304,9 @@ Function Update-F5ClientSSLProfile {
     .EXAMPLE
     PS C:\> Update-F5ClientSSLProfile -ProfileName "~Customer1~testserver3.local" -PublicKey "/Customer1/testserver3.local.20250601" -PrivateKey "/Customer1/testserver3.local.20250601" -Chain "R11.crt"
 
+    .EXAMPLE
+    PS C:\> Update-F5ClientSSLProfile -ProfileName "~Customer1~testserver3.local" -PublicKey "/Customer1/testserver3.local.20250601"
+
     #>
     Param(
       [Parameter(Mandatory=$true)][String]$ProfileName,
