@@ -2,9 +2,9 @@ Function Connect-F5 {
     <#
     .SYNOPSIS
     Establishes a connection to an F5 BIG-IP and saves the connection information
-    to a global variable to be used by subsequent Rest commands.
+	 to a global variable to be used by subsequent Rest commands.
     NOTE: 20m validity period by default - I am not handling the extension of that
-    nor reissuance at this time.  
+    nor reissuance at this time.
 
     .DESCRIPTION
     Attempt to esablish a connection to an F5 BIG-IP and if the connection succeeds
@@ -302,15 +302,20 @@ Function Update-F5ClientSSLProfile {
     Update Client SSL Profile.
 
     .EXAMPLE
-    PS C:\> Update-F5ClientSSLProfile -ProfileName "/Customer1/testserver3.local" -PublicKey "/Customer1/testserver3.local.20241001" -PrivateKey "/Customer1/testserver3.local.20241001" -Chain "R11.crt"
+    PS C:\> Update-F5ClientSSLProfile -ProfileName "/Customer1/testserver3.local" -PublicKey "/Customer1/testserver3.local.20250601" -PrivateKey "/Customer1/testserver3.local.20250601" -Chain "R11.crt"
 
     #>
     Param(
       [Parameter(Mandatory=$true)][String]$ProfileName,
-      [Parameter(Mandatory=$true)][String]$PublicKey,
-      [Parameter(Mandatory=$true)][String]$PrivateKey,
-      [Parameter(Mandatory=$true)][String]$Chain
+      [Parameter(Mandatory=$false)][String]$PublicKey,
+      [Parameter(Mandatory=$false)][String]$PrivateKey,
+      [Parameter(Mandatory=$false)][String]$Chain
    )
+
+   $Keys = (Send-F5RestRequest -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Headers $Headers) | ConvertFrom-JSON
+   If($PublicKey -eq "") { $PublicKey = $Keys.cert }
+   If($PrivateKey -eq "") { $PrivateKey = $Keys.key }
+   If($Chain -eq "") { $Chain = $Keys.chain }
 
    $payload = @{
          'key' = $PrivateKey
@@ -320,6 +325,9 @@ Function Update-F5ClientSSLProfile {
 
    $Headers = $global:F5Connection.Headers
 
-   $Results = ((Send-F5RestRequest -Method PATCH -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Body $payload -Headers $Headers)) | ConvertFrom-JSON
+   $Results = (Send-F5RestRequest -Method PATCH -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Body $payload -Headers $Headers) | ConvertFrom-JSON
    Return $Results
 }
+
+
+
