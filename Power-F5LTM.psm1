@@ -332,5 +332,32 @@ Function Update-F5ClientSSLProfile {
    Return $Results
 }
 
+Function Invoke-F5BashCmd {
+    <#
+    .SYNOPSIS
+    Run a bash command.
+
+    .DESCRIPTION
+    Run a bash command.
+
+    .EXAMPLE
+    PS C:\> Invoke-F5BashCmd -Command "cat /config/filestore/files_d/Customer1_d/certificate_d/\:Customer1\:testserver3.local.20250601*"
+
+    #>
+    Param(
+      [Parameter(Mandatory=$true)][String]$Command
+   )
+
+   $payload = @{
+         'command' = 'run'
+         'utilCmdArgs' = "-c '$($Command)'"
+   } | ConvertTo-JSON
+   
+   $Headers = $global:F5Connection.Headers
+
+   $Results = (Send-F5RestRequest -Method POST -Uri "/mgmt/tm/util/bash" -Body $payload -Headers $Headers) | ConvertFrom-JSON
+   Return $Results.commandResult
+}
+
 
 
