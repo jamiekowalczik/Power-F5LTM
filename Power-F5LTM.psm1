@@ -267,7 +267,7 @@ Function New-F5ClientSSLProfile {
     Create Client SSL Profile.
 
     .EXAMPLE
-    PS C:\> New-F5ClientSSLProfile -ProfileName "/Customer1/testserver3.local" -PublicKey "/Customer1/testserver3.local.20241001" -PrivateKey "/Customer1/testserver3.local.20241001" -Chain "R11.crt"
+    PS C:\> New-F5ClientSSLProfile -ProfileName "~Customer1~testserver3.local" -PublicKey "/Customer1/testserver3.local.20241001" -PrivateKey "/Customer1/testserver3.local.20241001" -Chain "R11.crt"
 
     #>
    Param(
@@ -302,7 +302,7 @@ Function Update-F5ClientSSLProfile {
     Update Client SSL Profile.
 
     .EXAMPLE
-    PS C:\> Update-F5ClientSSLProfile -ProfileName "/Customer1/testserver3.local" -PublicKey "/Customer1/testserver3.local.20250601" -PrivateKey "/Customer1/testserver3.local.20250601" -Chain "R11.crt"
+    PS C:\> Update-F5ClientSSLProfile -ProfileName "~Customer1~testserver3.local" -PublicKey "/Customer1/testserver3.local.20250601" -PrivateKey "/Customer1/testserver3.local.20250601" -Chain "R11.crt"
 
     #>
     Param(
