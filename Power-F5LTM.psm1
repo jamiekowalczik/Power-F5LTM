@@ -2,9 +2,9 @@ Function Connect-F5 {
     <#
     .SYNOPSIS
     Establishes a connection to an F5 BIG-IP and saves the connection information
-	 to a global variable to be used by subsequent Rest commands.
+    to a global variable to be used by subsequent Rest commands.
     NOTE: 20m validity period by default - I am not handling the extension of that
-    nor reissuance at this time.
+    nor reissuance at this time.  
 
     .DESCRIPTION
     Attempt to esablish a connection to an F5 BIG-IP and if the connection succeeds
