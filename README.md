@@ -40,6 +40,7 @@ Function        Add-F5PrivateKey                                   1.0.0.0    po
 Function        Add-F5PublicKey                                    1.0.0.0    power-f5ltm
 Function        Connect-F5                                         1.0.0.0    power-f5ltm
 Function        Get-F5ExpiringOrExpiredCertificates                1.0.0.0    power-f5ltm
+Function        Invoke-F5BashCmd                                   1.0.0.0    power-f5ltm
 Function        New-F5ClientSSLProfile                             1.0.0.0    power-f5ltm
 Function        Send-F5RestRequest                                 1.0.0.0    power-f5ltm
 Function        Update-F5ClientSSLProfile                          1.0.0.0    power-f5ltm
