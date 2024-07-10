@@ -137,7 +137,7 @@ Function Get-F5ExpiringOrExpiredCertificates {
    )
 
    $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
-   $allExpiringOrExpiredPublicKeys = ((Send-F5RestRequest -Uri "/mgmt/tm/sys/file/ssl-cert").Content | ConvertFrom-JSON).items | Select Name,partition,subject.subjectAlternativeName,@{name='expirationDate';expression={$origin.addseconds($_.expirationDate)}} | Where { $_.expirationDate -lt (Get-date).AddDays($ExpiresIn) }
+   $allExpiringOrExpiredPublicKeys = ((Send-F5RestRequest -Uri "/mgmt/tm/sys/file/ssl-cert").Content | ConvertFrom-JSON).items | Select Name,partition,subject,subjectAlternativeName,@{name='expirationDate';expression={$origin.addseconds($_.expirationDate)}} | Where { $_.expirationDate -lt (Get-date).AddDays($ExpiresIn) }
    $allClientSSLProfiles = ((Send-F5RestRequest -Uri "/mgmt/tm/ltm/profile/client-ssl").Content | ConvertFrom-JSON).items | Select name,partition,cert,chain,key
    $allVirtuals = ((Send-F5RestRequest -Uri "/mgmt/tm/ltm/virtual").Content | ConvertFrom-JSON).items | Select name,partition,description,@{name='profiles';expression={((Send-F5RestRequest -Uri "$($_.profilesReference.link.Replace('https://localhost',''))").Content | ConvertFrom-JSON).items | Select Name}}
 
