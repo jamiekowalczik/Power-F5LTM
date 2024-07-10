@@ -133,14 +133,16 @@ Function Get-F5ExpiringOrExpiredCertificates {
 
     #>
    param(
-      [Parameter(Mandatory=$false)][Int]$ExpiresIn = 30
+      [Parameter(Mandatory=$false)][Int]$ExpiresIn = 30,
+      [Parameter(Mandatory=$false)][Bool]$GetVirtuals = $true
    )
 
    $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
-   $allExpiringOrExpiredPublicKeys = ((Send-F5RestRequest -Uri "/mgmt/tm/sys/file/ssl-cert").Content | ConvertFrom-JSON).items | Select Name,partition,subject.subjectAlternativeName,@{name='expirationDate';expression={$origin.addseconds($_.expirationDate)}} | Where { $_.expirationDate -lt (Get-date).AddDays($ExpiresIn) }
+   $allExpiringOrExpiredPublicKeys = ((Send-F5RestRequest -Uri "/mgmt/tm/sys/file/ssl-cert").Content | ConvertFrom-JSON).items | Select Name,partition,subject,subjectAlternativeName,@{name='expirationDate';expression={$origin.addseconds($_.expirationDate)}} | Where { $_.expirationDate -lt (Get-date).AddDays($ExpiresIn) }
    $allClientSSLProfiles = ((Send-F5RestRequest -Uri "/mgmt/tm/ltm/profile/client-ssl").Content | ConvertFrom-JSON).items | Select name,partition,cert,chain,key
-   $allVirtuals = ((Send-F5RestRequest -Uri "/mgmt/tm/ltm/virtual").Content | ConvertFrom-JSON).items | Select name,partition,description,@{name='profiles';expression={((Send-F5RestRequest -Uri "$($_.profilesReference.link.Replace('https://localhost',''))").Content | ConvertFrom-JSON).items | Select Name}}
-
+   If($GetVirtuals){
+      $allVirtuals = ((Send-F5RestRequest -Uri "/mgmt/tm/ltm/virtual").Content | ConvertFrom-JSON).items | Select name,partition,description,@{name='profiles';expression={((Send-F5RestRequest -Uri "$($_.profilesReference.link.Replace('https://localhost',''))").Content | ConvertFrom-JSON).items | Select Name}}
+   }
    $ExpiringCerts = @()
    ForEach($aExpiringOrExpiredPublicKey in $allExpiringOrExpiredPublicKeys){
       $numProfiles = 0
@@ -148,14 +150,16 @@ Function Get-F5ExpiringOrExpiredCertificates {
          If($aClientSSLProfile.cert -eq "/$($aExpiringOrExpiredPublicKey.partition)/$($aExpiringOrExpiredPublicKey.name)"){
             $numProfiles+=1
             $numVirtuals = 0
-            $Virtuals = @()
-            ForEach($aVirtual in $allVirtuals){
-               ForEach($aVirtualProfile in $aVirtual.profiles){
-                  If("/$($aVirtual.partition)/$($aVirtualProfile.name)" -eq "/$($aClientSSLProfile.partition)/$($aClientSSLProfile.name)"){
-                     $numVirtuals+=1
-                     $Virtuals += New-Object -TypeName PSObject -Property @{name="/$($aVirtual.partition)/$($aVirtual.name)"; Description=$aVirtual.description}
-                  }
-               }  
+            If($GetVirtuals){
+               $Virtuals = @()
+               ForEach($aVirtual in $allVirtuals){
+                  ForEach($aVirtualProfile in $aVirtual.profiles){
+                     If("/$($aVirtual.partition)/$($aVirtualProfile.name)" -eq "/$($aClientSSLProfile.partition)/$($aClientSSLProfile.name)"){
+                        $numVirtuals+=1
+                        $Virtuals += New-Object -TypeName PSObject -Property @{name="/$($aVirtual.partition)/$($aVirtual.name)"; Description=$aVirtual.description}
+                     }
+                  }  
+               }
             }
             If($numVirtuals -ne 0){
                $ExpiringCerts += New-Object -TypeName PSObject -Property @{Certificate="/$($aExpiringOrExpiredPublicKey.partition)/$($aExpiringOrExpiredPublicKey.name)"; Partition=$aExpiringOrExpiredPublicKey.partition; Profile="/$($aClientSSLProfile.partition)/$($aClientSSLProfile.name)"; Expiration=$aExpiringOrExpiredPublicKey.expirationDate; Subject=$aExpiringOrExpiredPublicKey.subject; SubjectAltName=$aExpiringOrExpiredPublicKey.subjectAlternativeName; Virtuals=$($Virtuals)}
