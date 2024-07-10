@@ -204,7 +204,7 @@ Function Add-F5File {
    Return $Results
 }
 
-Function Add-F5PrivateKey {
+Function Import-F5PrivateKey {
     <#
     .SYNOPSIS
     Create Private Key using file which exists on the filesystem.
@@ -213,7 +213,7 @@ Function Add-F5PrivateKey {
     Create Private Key using file which exists on the filesystem.
 
     .EXAMPLE
-    PS C:\> Add-F5PrivateKey -SourceFile "/var/config/rest/bulk/testserver3.local.key" -DestinationName "/Customer1/testserver3.local.20241001"
+    PS C:\> Import-F5PrivateKey -SourceFile "/var/config/rest/bulk/testserver3.local.key" -DestinationName "/Customer1/testserver3.local.20241001"
 
     #>
    Param(
@@ -233,7 +233,7 @@ Function Add-F5PrivateKey {
    Return $Results
 }
 
-Function Add-F5PublicKey {
+Function Import-F5PublicKey {
     <#
     .SYNOPSIS
     Create public Key using file which exists on the filesystem.
@@ -242,7 +242,7 @@ Function Add-F5PublicKey {
     Create public Key using file which exists on the filesystem.
 
     .EXAMPLE
-    PS C:\> Add-F5PublicKey -SourceFile "/var/config/rest/bulk/testserver3.local.cer" -DestinationName "/Customer1/testserver3.local.20241001"
+    PS C:\> Import-F5PublicKey -SourceFile "/var/config/rest/bulk/testserver3.local.cer" -DestinationName "/Customer1/testserver3.local.20241001"
 
     #>
     Param(
