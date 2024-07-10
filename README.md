@@ -15,11 +15,11 @@ PS > Add-F5File -SourceFile "C:\Users\username\certbot\LE_PROD\1821180437\testse
 
 PS > Add-F5File -SourceFile "C:\Users\username\certbot\LE_PROD\1821180437\testserver3.local\cert.cer" -DestinationFileName "testserver3.local.cer"
 ```
-### Create Private and Public Key pair from uploaded files
+### Import Private and Public Key pair from uploaded files
 ```
-PS > Add-F5PrivateKey -SourceFile "/var/config/rest/bulk/testserver3.local.key" -DestinationName "/Customer1/testserver3.local.20241001"
+PS > Import-F5PrivateKey -SourceFile "/var/config/rest/bulk/testserver3.local.key" -DestinationName "/Customer1/testserver3.local.20241001"
 
-PS > Add-F5PublicKey -SourceFile "/var/config/rest/bulk/testserver3.local.cer" -DestinationName "/Customer1/testserver3.local.20241001"
+PS > Import-F5PublicKey -SourceFile "/var/config/rest/bulk/testserver3.local.cer" -DestinationName "/Customer1/testserver3.local.20241001"
 ```
 ### Create new client-ssl profile
 ```
