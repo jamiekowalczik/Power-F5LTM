@@ -137,7 +137,7 @@ Function Get-F5ExpiringOrExpiredCertificates {
    )
 
    $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
-   $allExpiringOrExpiredPublicKeys = ((Send-F5RestRequest -Uri "/mgmt/tm/sys/file/ssl-cert").Content | ConvertFrom-JSON).items | Select Name,partition,subject,@{name='expirationDate';expression={$origin.addseconds($_.expirationDate)}} | Where { $_.expirationDate -lt (Get-date).AddDays($ExpiresIn) }
+   $allExpiringOrExpiredPublicKeys = ((Send-F5RestRequest -Uri "/mgmt/tm/sys/file/ssl-cert").Content | ConvertFrom-JSON).items | Select Name,partition,subject.subjectAlternativeName,@{name='expirationDate';expression={$origin.addseconds($_.expirationDate)}} | Where { $_.expirationDate -lt (Get-date).AddDays($ExpiresIn) }
    $allClientSSLProfiles = ((Send-F5RestRequest -Uri "/mgmt/tm/ltm/profile/client-ssl").Content | ConvertFrom-JSON).items | Select name,partition,cert,chain,key
    $allVirtuals = ((Send-F5RestRequest -Uri "/mgmt/tm/ltm/virtual").Content | ConvertFrom-JSON).items | Select name,partition,description,@{name='profiles';expression={((Send-F5RestRequest -Uri "$($_.profilesReference.link.Replace('https://localhost',''))").Content | ConvertFrom-JSON).items | Select Name}}
 
@@ -246,6 +246,7 @@ Function Add-F5PublicKey {
       [Parameter(Mandatory=$true)][String]$DestinationName
    )
 
+   If($SourceFile -Like "https://*"){ Write-Host "url attempt"; Break }
    $payload = @{
       'command' = 'install'
       'name' = $DestinationName
@@ -358,6 +359,3 @@ Function Invoke-F5BashCmd {
    $Results = (Send-F5RestRequest -Method POST -Uri "/mgmt/tm/util/bash" -Body $payload -Headers $Headers) | ConvertFrom-JSON
    Return $Results.commandResult
 }
-
-
-
