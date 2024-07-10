@@ -158,13 +158,13 @@ Function Get-F5ExpiringOrExpiredCertificates {
                }  
             }
             If($numVirtuals -ne 0){
-               $ExpiringCerts += New-Object -TypeName PSObject -Property @{Certificate="/$($aExpiringOrExpiredPublicKey.partition)/$($aExpiringOrExpiredPublicKey.name)"; Profile="/$($aClientSSLProfile.partition)/$($aClientSSLProfile.name)"; Expiration=$aExpiringOrExpiredPublicKey.expirationDate; Subject=$aExpiringOrExpiredPublicKey.subject; Virtuals=$($Virtuals)}
+               $ExpiringCerts += New-Object -TypeName PSObject -Property @{Certificate="/$($aExpiringOrExpiredPublicKey.partition)/$($aExpiringOrExpiredPublicKey.name)"; Profile="/$($aClientSSLProfile.partition)/$($aClientSSLProfile.name)"; Expiration=$aExpiringOrExpiredPublicKey.expirationDate; Subject=$aExpiringOrExpiredPublicKey.subject; SubjectAltName=$aExpiringOrExpiredPublicKey.subjectAlternativeName; Virtuals=$($Virtuals)}
             }Else{
-               $ExpiringCerts += New-Object -TypeName PSObject -Property @{Certificate="/$($aExpiringOrExpiredPublicKey.partition)/$($aExpiringOrExpiredPublicKey.name)"; Profile="/$($aClientSSLProfile.partition)/$($aClientSSLProfile.name)"; Expiration=$aExpiringOrExpiredPublicKey.expirationDate; Subject=$aExpiringOrExpiredPublicKey.subject; Virtuals=$null}
+               $ExpiringCerts += New-Object -TypeName PSObject -Property @{Certificate="/$($aExpiringOrExpiredPublicKey.partition)/$($aExpiringOrExpiredPublicKey.name)"; Profile="/$($aClientSSLProfile.partition)/$($aClientSSLProfile.name)"; Expiration=$aExpiringOrExpiredPublicKey.expirationDate; Subject=$aExpiringOrExpiredPublicKey.subject; SubjectAltName=$aExpiringOrExpiredPublicKey.subjectAlternativeName; Virtuals=$null}
             }
          }
       }
-      If($numProfiles -eq 0){ $ExpiringCerts += New-Object -TypeName PSObject -Property @{Certificate="/$($aExpiringOrExpiredPublicKey.partition)/$($aExpiringOrExpiredPublicKey.name)"; Profile=$null; Expiration=$aExpiringOrExpiredPublicKey.expirationDate; Subject=$aExpiringOrExpiredPublicKey.subject} }
+      If($numProfiles -eq 0){ $ExpiringCerts += New-Object -TypeName PSObject -Property @{Certificate="/$($aExpiringOrExpiredPublicKey.partition)/$($aExpiringOrExpiredPublicKey.name)"; Profile=$null; Expiration=$aExpiringOrExpiredPublicKey.expirationDate; Subject=$aExpiringOrExpiredPublicKey.subject; SubjectAltName=$aExpiringOrExpiredPublicKey.subjectAlternativeName} }
    }
 
    Return $ExpiringCerts
