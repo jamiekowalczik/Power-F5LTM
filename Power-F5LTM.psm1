@@ -227,9 +227,7 @@ Function Import-F5PrivateKey {
       'from-local-file' = $SourceFile
    } | ConvertTo-JSON
 
-   $Headers = $global:F5Connection.Headers
-
-   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/sys/crypto/key" -Body $payload -Headers $Headers)) | ConvertFrom-JSON
+   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/sys/crypto/key" -Body $payload)) | ConvertFrom-JSON
    Return $Results
 }
 
@@ -257,9 +255,7 @@ Function Import-F5PublicKey {
       'from-local-file' = $SourceFile
    } | ConvertTo-JSON
 
-   $Headers = $global:F5Connection.Headers
-
-   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/sys/crypto/cert" -Body $payload -Headers $Headers)) | ConvertFrom-JSON
+   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/sys/crypto/cert" -Body $payload)) | ConvertFrom-JSON
    Return $Results
 }
 
@@ -292,9 +288,7 @@ Function New-F5ClientSSLProfile {
 
    } | ConvertTo-JSON
 
-   $Headers = $global:F5Connection.Headers
-
-   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/ltm/profile/client-ssl/" -Body $payload -Headers $Headers)) | ConvertFrom-JSON
+   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/ltm/profile/client-ssl/" -Body $payload)) | ConvertFrom-JSON
    Return $Results
 }
 
@@ -331,9 +325,7 @@ Function Update-F5ClientSSLProfile {
          'chain' = $chain
    } | ConvertTo-JSON
 
-   $Headers = $global:F5Connection.Headers
-
-   $Results = (Send-F5RestRequest -Method PATCH -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Body $payload -Headers $Headers) | ConvertFrom-JSON
+   $Results = (Send-F5RestRequest -Method PATCH -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Body $payload) | ConvertFrom-JSON
    Return $Results
 }
 
@@ -357,9 +349,7 @@ Function Invoke-F5BashCmd {
          'command' = 'run'
          'utilCmdArgs' = "-c '$($Command)'"
    } | ConvertTo-JSON
-   
-   $Headers = $global:F5Connection.Headers
 
-   $Results = (Send-F5RestRequest -Method POST -Uri "/mgmt/tm/util/bash" -Body $payload -Headers $Headers) | ConvertFrom-JSON
+   $Results = (Send-F5RestRequest -Method POST -Uri "/mgmt/tm/util/bash" -Body $payload) | ConvertFrom-JSON
    Return $Results.commandResult
 }
