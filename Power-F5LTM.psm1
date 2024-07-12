@@ -3,9 +3,7 @@ Function Connect-F5 {
     .SYNOPSIS
     Establishes a connection to an F5 BIG-IP and saves the connection information
 	 to a global variable to be used by subsequent Rest commands.
-    NOTE: 20m validity period by default - I am not handling the extension of that
-    nor reissuance at this time.
-
+    
     .DESCRIPTION
     Attempt to esablish a connection to an F5 BIG-IP and if the connection succeeds
 	 then it is saved to a global variable to be used for subsequent Rest commands.
@@ -93,6 +91,11 @@ Function Send-F5RestRequest {
       [Parameter(Mandatory=$false)][HashTable]$Headers,
       [Parameter(Mandatory=$false)][String]$Body
    )
+
+   ## Check Token
+   If(($global:F5Connection.Token.startTime).AddMinutes(18) -lt (get-Date)){ 
+      Connect-F5 -Hostname $global:F5Connection.F5APIHostname -Username $global:F5Connection.F5APIUsername -Password $global:F5Connection.F5APIPassword -Troubleshoot $global:F5Connection.F5ApiTroubleshoot -SkipCertificateCheck $global:F5Connection.F5SkipCertificateCheck
+   } 
 
    Try {
       If($Headers -eq $null) { $Headers = $global:F5Connection.Headers }
@@ -227,7 +230,9 @@ Function Import-F5PrivateKey {
       'from-local-file' = $SourceFile
    } | ConvertTo-JSON
 
-   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/sys/crypto/key" -Body $payload)) | ConvertFrom-JSON
+   $Headers = $global:F5Connection.Headers
+
+   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/sys/crypto/key" -Body $payload -Headers $Headers)) | ConvertFrom-JSON
    Return $Results
 }
 
@@ -255,7 +260,9 @@ Function Import-F5PublicKey {
       'from-local-file' = $SourceFile
    } | ConvertTo-JSON
 
-   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/sys/crypto/cert" -Body $payload)) | ConvertFrom-JSON
+   $Headers = $global:F5Connection.Headers
+
+   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/sys/crypto/cert" -Body $payload -Headers $Headers)) | ConvertFrom-JSON
    Return $Results
 }
 
@@ -288,7 +295,9 @@ Function New-F5ClientSSLProfile {
 
    } | ConvertTo-JSON
 
-   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/ltm/profile/client-ssl/" -Body $payload)) | ConvertFrom-JSON
+   $Headers = $global:F5Connection.Headers
+
+   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/ltm/profile/client-ssl/" -Body $payload -Headers $Headers)) | ConvertFrom-JSON
    Return $Results
 }
 
@@ -314,7 +323,7 @@ Function Update-F5ClientSSLProfile {
       [Parameter(Mandatory=$false)][String]$Chain
    )
 
-   $Keys = (Send-F5RestRequest -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)") | ConvertFrom-JSON
+   $Keys = (Send-F5RestRequest -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Headers $Headers) | ConvertFrom-JSON
    If($PublicKey -eq "") { $PublicKey = $Keys.cert }
    If($PrivateKey -eq "") { $PrivateKey = $Keys.key }
    If($Chain -eq "") { $Chain = $Keys.chain }
@@ -325,7 +334,9 @@ Function Update-F5ClientSSLProfile {
          'chain' = $chain
    } | ConvertTo-JSON
 
-   $Results = (Send-F5RestRequest -Method PATCH -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Body $payload) | ConvertFrom-JSON
+   $Headers = $global:F5Connection.Headers
+
+   $Results = (Send-F5RestRequest -Method PATCH -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Body $payload -Headers $Headers) | ConvertFrom-JSON
    Return $Results
 }
 
@@ -349,7 +360,9 @@ Function Invoke-F5BashCmd {
          'command' = 'run'
          'utilCmdArgs' = "-c '$($Command)'"
    } | ConvertTo-JSON
+   
+   $Headers = $global:F5Connection.Headers
 
-   $Results = (Send-F5RestRequest -Method POST -Uri "/mgmt/tm/util/bash" -Body $payload) | ConvertFrom-JSON
+   $Results = (Send-F5RestRequest -Method POST -Uri "/mgmt/tm/util/bash" -Body $payload -Headers $Headers) | ConvertFrom-JSON
    Return $Results.commandResult
 }
