@@ -36,8 +36,8 @@ PS > Get-Command -Module Power-F5LTM
 CommandType     Name                                               Version    Source
 -----------     ----                                               -------    ------
 Function        Add-F5File                                         1.0.0.0    power-f5ltm
-Function        Import-F5PrivateKey                                   1.0.0.0    power-f5ltm
-Function        Import-F5PublicKey                                    1.0.0.0    power-f5ltm
+Function        Import-F5PrivateKey                                1.0.0.0    power-f5ltm
+Function        Import-F5PublicKey                                 1.0.0.0    power-f5ltm
 Function        Connect-F5                                         1.0.0.0    power-f5ltm
 Function        Get-F5ExpiringOrExpiredCertificates                1.0.0.0    power-f5ltm
 Function        Invoke-F5BashCmd                                   1.0.0.0    power-f5ltm
