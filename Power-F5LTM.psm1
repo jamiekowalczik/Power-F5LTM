@@ -314,7 +314,7 @@ Function Update-F5ClientSSLProfile {
       [Parameter(Mandatory=$false)][String]$Chain
    )
 
-   $Keys = (Send-F5RestRequest -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Headers $Headers) | ConvertFrom-JSON
+   $Keys = (Send-F5RestRequest -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)") | ConvertFrom-JSON
    If($PublicKey -eq "") { $PublicKey = $Keys.cert }
    If($PrivateKey -eq "") { $PrivateKey = $Keys.key }
    If($Chain -eq "") { $Chain = $Keys.chain }
