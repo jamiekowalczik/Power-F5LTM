@@ -35,13 +35,18 @@ PS > Get-Command -Module Power-F5LTM
 
 CommandType     Name                                               Version    Source
 -----------     ----                                               -------    ------
-Function        Add-F5File                                         1.0.0.0    power-f5ltm
-Function        Import-F5PrivateKey                                1.0.0.0    power-f5ltm
-Function        Import-F5PublicKey                                 1.0.0.0    power-f5ltm
-Function        Connect-F5                                         1.0.0.0    power-f5ltm
-Function        Get-F5ExpiringOrExpiredCertificates                1.0.0.0    power-f5ltm
-Function        Invoke-F5BashCmd                                   1.0.0.0    power-f5ltm
-Function        New-F5ClientSSLProfile                             1.0.0.0    power-f5ltm
-Function        Send-F5RestRequest                                 1.0.0.0    power-f5ltm
-Function        Update-F5ClientSSLProfile                          1.0.0.0    power-f5ltm
+Function        Add-F5File                                         1.0.0.0    Power-F5LTM
+Function        Connect-F5                                         1.0.0.0    Power-F5LTM
+Function        Get-F5Certificates                                 1.0.0.0    Power-F5LTM
+Function        Get-F5ClientSSLProfile                             1.0.0.0    Power-F5LTM
+Function        Get-F5ExpiringOrExpiredCertificates                1.0.0.0    Power-F5LTM
+Function        Get-Nodes                                          1.0.0.0    Power-F5LTM
+Function        Get-Pools                                          1.0.0.0    Power-F5LTM
+Function        Get-Virtuals                                       1.0.0.0    Power-F5LTM
+Function        Import-F5PrivateKey                                1.0.0.0    Power-F5LTM
+Function        Import-F5PublicKey                                 1.0.0.0    Power-F5LTM
+Function        Invoke-F5BashCmd                                   1.0.0.0    Power-F5LTM
+Function        New-F5ClientSSLProfile                             1.0.0.0    Power-F5LTM
+Function        Send-F5RestRequest                                 1.0.0.0    Power-F5LTM
+Function        Update-F5ClientSSLProfile                          1.0.0.0    Power-F5LTM
 ```
