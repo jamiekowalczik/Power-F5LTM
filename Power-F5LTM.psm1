@@ -2,12 +2,14 @@ Function Connect-F5 {
     <#
     .SYNOPSIS
     Establishes a connection to an F5 BIG-IP and saves the connection information
-	 to a global variable to be used by subsequent Rest commands.
-    
+         to a global variable to be used by subsequent Rest commands.
+    NOTE: 20m validity period by default - I am not handling the extension of that
+    nor reissuance at this time.
+
     .DESCRIPTION
     Attempt to esablish a connection to an F5 BIG-IP and if the connection succeeds
-	 then it is saved to a global variable to be used for subsequent Rest commands.
-	
+         then it is saved to a global variable to be used for subsequent Rest commands.
+
     .EXAMPLE
     PS C:\>  Connect-F5 -Hostname bigip.local -Username ausername -Password apassword
 
@@ -32,14 +34,15 @@ Function Connect-F5 {
          password = $Password
          loginProviderName = "tmos"
       } | ConvertTo-JSON
-   
+
       Try {
+         $ProgressPreference = 'SilentlyContinue'
          If($SkipCertificateCheck){ $queryParams += @{SkipCertificateCheck = $true} } Else { $queryParams += @{SkipCertificateCheck = $false } }
 
-         $Results = (Invoke-WebRequest "https://$($Hostname)/mgmt/shared/authn/login" -Method POST -ContentType 'application/json' -Body $TokenBody @queryParams | ConvertFrom-JSON)
+         $Results = (Invoke-WebRequest "https://$($Hostname)/mgmt/shared/authn/login" -Method POST -ContentType 'application/json' -Body $TokenBody @queryParams -UseBasicParsing | ConvertFrom-JSON)
          If($Troubleshoot){ $Results }
          $token = $($Results.token.token)
-      
+
       } catch {
          If($_.Exception.Response.StatusCode -eq "Unauthorized") {
             Write-Error "`nThe F5 BIG-IP connection failed - Unauthorized`n"
@@ -49,7 +52,7 @@ Function Connect-F5 {
             Write-Error "`n($_.Exception.Message)`n"
             Break
          }
-      }  
+      }
 
       $Headers = @{}
       $Headers.Add("X-F5-Auth-Token", $token)
@@ -67,7 +70,7 @@ Function Connect-F5 {
       If($Troubleshoot){ $global:F5Connection }
    }
 
-   end {} 
+   end {}
 }
 
 Function Send-F5RestRequest {
@@ -93,29 +96,30 @@ Function Send-F5RestRequest {
    )
 
    ## Check Token
-   If(($global:F5Connection.Token.startTime).AddMinutes(18) -lt (get-Date)){ 
+   If(($global:F5Connection.Token.startTime).AddMinutes(18) -lt (get-Date)){
       Connect-F5 -Hostname $global:F5Connection.F5APIHostname -Username $global:F5Connection.F5APIUsername -Password $global:F5Connection.F5APIPassword -Troubleshoot $global:F5Connection.F5ApiTroubleshoot -SkipCertificateCheck $global:F5Connection.F5SkipCertificateCheck
-   } 
+   }
 
    Try {
       If($Headers -eq $null) { $Headers = $global:F5Connection.Headers }
       If($global:F5Connection.F5SkipCertificateCheck){ $queryParams += @{SkipCertificateCheck = $true} } Else { $queryParams += @{SkipCertificateCheck = $false } }
       If($Body -ne ""){ $queryParams += @{Body = $Body}}
 
-      $Results = Invoke-WebRequest "https://$($global:F5Connection.F5APIHostname)$($Uri)" -Method $Method -Headers $Headers -SkipHeaderValidation @queryParams
+      $ProgressPreference = 'SilentlyContinue'
+      $Results = Invoke-WebRequest "https://$($global:F5Connection.F5APIHostname)$($Uri)" -Method $Method -Headers $Headers -SkipHeaderValidation @queryParams -UseBasicParsing
       If($Troubleshoot){ $Results }
       Return $Results
-      
+
    } catch {
       If($_.Exception.Response.StatusCode -eq "Unauthorized") {
          Write-Host -ForegroundColor Red "`nThe F5 BIG-IP connection failed - Unauthorized`n"
          Break
       } else {
          Write-Error "Error connecting to F5 BIG-IP"
-         Write-Error "`n($_.Exception.Message)`n"
+         Write-Error "`n$($_)`n"
          Break
       }
-   }  
+   }
 }
 
 Function Get-F5ExpiringOrExpiredCertificates {
@@ -125,7 +129,7 @@ Function Get-F5ExpiringOrExpiredCertificates {
     they exist in and any virtuals where the SSL profile is utilized.
 
     .DESCRIPTION
-    Get an object containing all certificates nearing expiration along with the SSL profiles 
+    Get an object containing all certificates nearing expiration along with the SSL profiles
     they exist in and any virtuals where the SSL profile is utilized.
 
     .EXAMPLE
@@ -161,7 +165,7 @@ Function Get-F5ExpiringOrExpiredCertificates {
                         $numVirtuals+=1
                         $Virtuals += New-Object -TypeName PSObject -Property @{name="/$($aVirtual.partition)/$($aVirtual.name)"; Description=$aVirtual.description}
                      }
-                  }  
+                  }
                }
             }
             If($numVirtuals -ne 0){
@@ -177,8 +181,30 @@ Function Get-F5ExpiringOrExpiredCertificates {
    Return $ExpiringCerts
 }
 
+Function Get-F5Certificates {
+   <#
+    .SYNOPSIS
+    Get all certificates
+
+    .DESCRIPTION
+    Get all certificates
+
+    .EXAMPLE
+    PS C:\> Get-F5Certificates
+
+   #>
+   Try {
+      $Headers = $global:F5Connection.Headers
+
+      $Results = ((Send-F5RestRequest -Method Get -Uri "/mgmt/tm/sys/file/ssl-cert" -Headers $Headers)) | ConvertFrom-JSON
+      Return $Results.items
+   } Catch {
+      Write-Error "`n($_.Exception.Message)`n"
+   }
+}
+
 Function Add-F5File {
-    <#
+   <#
     .SYNOPSIS
     Upload file to /var/config/rest/bulk
 
@@ -188,27 +214,31 @@ Function Add-F5File {
     .EXAMPLE
     PS C:\> Add-F5File -SourceFile "C:\Users\username\certbot\LE_PROD\1821180437\testserver3.local\cert.key" -DestinationFileName "testserver3.local.key"
 
-    #>
+   #>
    Param(
       [Parameter(Mandatory=$true)][String]$SourceFile,
       [Parameter(Mandatory=$true)][String]$DestinationFileName
    )
 
-   $File = [IO.File]::ReadAllBytes($SourceFile)
-   $enc = [System.Text.Encoding]::GetEncoding("iso-8859-1")
-   $encodedfile = $enc.GetString($File)
-   $range = "0-" + ($encodedfile.Length - 1) + "/" + $encodedfile.Length  # you need to calculate the size of this file to use in the REST Header
+   Try {
+      $File = [IO.File]::ReadAllBytes($SourceFile)
+      $enc = [System.Text.Encoding]::GetEncoding("iso-8859-1")
+      $encodedfile = $enc.GetString($File)
+      $range = "0-" + ($encodedfile.Length - 1) + "/" + $encodedfile.Length  # you need to calculate the size of this file to use in the REST Header
 
-   $Headers = $global:F5Connection.Headers
-   $Headers.Remove("Content-Range")
-   $Headers.Add("Content-Range", $range)
+      $Headers = $global:F5Connection.Headers
+      $Headers.Remove("Content-Range")
+      $Headers.Add("Content-Range", $range)
 
-   $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/shared/file-transfer/bulk/uploads/$($DestinationFileName)" -Body $encodedfile -Headers $Headers).content) | ConvertFrom-JSON
-   Return $Results
+      $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/shared/file-transfer/bulk/uploads/$($DestinationFileName)" -Body $encodedfile -Headers $Headers).content) | ConvertFrom-JSON
+      Return $Results
+   } Catch {
+      Write-Error "`n($_.Exception.Message)`n"
+   }
 }
 
 Function Import-F5PrivateKey {
-    <#
+   <#
     .SYNOPSIS
     Create Private Key using file which exists on the filesystem.
 
@@ -218,7 +248,7 @@ Function Import-F5PrivateKey {
     .EXAMPLE
     PS C:\> Import-F5PrivateKey -SourceFile "/var/config/rest/bulk/testserver3.local.key" -DestinationName "/Customer1/testserver3.local.20241001"
 
-    #>
+   #>
    Param(
       [Parameter(Mandatory=$true)][String]$SourceFile,
       [Parameter(Mandatory=$true)][String]$DestinationName
@@ -264,6 +294,37 @@ Function Import-F5PublicKey {
 
    $Results = ((Send-F5RestRequest -Method POST -Uri "/mgmt/tm/sys/crypto/cert" -Body $payload -Headers $Headers)) | ConvertFrom-JSON
    Return $Results
+}
+
+Function Get-F5ClientSSLProfile {
+    <#
+    .SYNOPSIS
+    Get Client SSL Profile.
+
+    .DESCRIPTION
+    Get Client SSL Profile.
+
+    .EXAMPLE
+    PS C:\> Get-F5ClientSSLProfile -ProfileName "~Customer1~testserver3.local"
+
+    #>
+   Param(
+      [Parameter(Mandatory=$false)][String]$ProfileName
+   )
+
+    $payload = @{
+       'name' = $ProfileName
+       'defaultsFrom' = $DefaultsFrom
+       'cert' = $PublicKey
+       'key' = $PrivateKey
+       'chain' = $Chain
+
+   } | ConvertTo-JSON
+
+   $Headers = $global:F5Connection.Headers
+
+   $Results = ((Send-F5RestRequest -Method Get -Uri "/mgmt/tm/ltm/profile/client-ssl" -Headers $Headers)) | ConvertFrom-JSON
+   Return $Results.items
 }
 
 Function New-F5ClientSSLProfile {
@@ -323,6 +384,8 @@ Function Update-F5ClientSSLProfile {
       [Parameter(Mandatory=$false)][String]$Chain
    )
 
+   $ProfileName = $ProfileName.Replace("/","~")
+
    $Keys = (Send-F5RestRequest -Uri "/mgmt/tm/ltm/profile/client-ssl/$($ProfileName)" -Headers $Headers) | ConvertFrom-JSON
    If($PublicKey -eq "") { $PublicKey = $Keys.cert }
    If($PrivateKey -eq "") { $PrivateKey = $Keys.key }
@@ -360,9 +423,72 @@ Function Invoke-F5BashCmd {
          'command' = 'run'
          'utilCmdArgs' = "-c '$($Command)'"
    } | ConvertTo-JSON
-   
+
    $Headers = $global:F5Connection.Headers
 
    $Results = (Send-F5RestRequest -Method POST -Uri "/mgmt/tm/util/bash" -Body $payload -Headers $Headers) | ConvertFrom-JSON
    Return $Results.commandResult
+}
+
+Function Get-Pools {
+   <#
+   .SYNOPSIS
+   Get all pools.
+
+   .DESCRIPTION
+   Get all pools.
+
+   .EXAMPLE
+   PS C:\> Get-Pools
+
+   #>
+   Param(
+      [Parameter(Mandatory=$false)][String]$Filter
+   )
+
+   $Headers = $global:F5Connection.Headers
+
+   $Results = (Send-F5RestRequest -Uri "/mgmt/tm/ltm/pool?$($Filter)" -Body $payload -Headers $Headers) | ConvertFrom-JSON
+   Return $Results.items
+}
+
+Function Get-Virtuals {
+   <#
+   .SYNOPSIS
+   Get all virtuals.
+
+   .DESCRIPTION
+   Get all virtuals.
+
+   .EXAMPLE
+   PS C:\> Get-Virtuals
+
+   #>
+   Param(
+      [Parameter(Mandatory=$false)][String]$Filter
+   )
+
+   $Headers = $global:F5Connection.Headers
+
+   $Results = (Send-F5RestRequest -Uri "/mgmt/tm/ltm/virtual?$($Filter)" -Body $payload -Headers $Headers) | ConvertFrom-JSON
+   Return $Results.items
+}
+
+Function Get-Nodes {
+   <#
+   .SYNOPSIS
+   Get all nodes.
+
+   .DESCRIPTION
+   Get all nodes.
+
+   .EXAMPLE
+   PS C:\> Get-Nodes
+
+   #>
+
+   $Headers = $global:F5Connection.Headers
+
+   $Results = (Send-F5RestRequest -Uri "/mgmt/tm/ltm/node" -Body $payload -Headers $Headers) | ConvertFrom-JSON
+   Return $Results.items
 }
